@@ -1,0 +1,51 @@
+FROM ubuntu
+
+RUN apt-get update
+RUN apt-get install openjdk-11-jdk -y
+RUN apt-get install wget -y
+
+########################################################
+########       C++17 INSTALLATION        ###############
+########################################################
+
+RUN echo "  C++17 installation started..."
+RUN apt-get install gcc-7 g++-7 -y
+RUN apt install build-essential pkg-config python-dev python-six cython python-numpy coinor-libipopt1v5 coinor-libipopt-dev -y
+RUN apt install git-all -y
+RUN apt install cmake -y
+RUN apt-get install librdkafka-dev -y
+RUN apt-get install libboost-all-dev -y
+RUN apt-get install libssl-dev -y
+RUN apt-get install libcurl4 -y
+
+########################################################
+########       C++KAFKA INSTALLATION        ############
+########################################################
+RUN echo "  C++ KAFKA installation started..."
+RUN git clone https://github.com/mfontanini/cppkafka.git
+WORKDIR cppkafka
+RUN mkdir build
+WORKDIR build
+RUN cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+RUN make -j
+RUN make install
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu"
+RUN echo "  C++KAFKA installed"
+WORKDIR /
+
+########################################################
+########       GET FILES NEEDED       #################
+########################################################
+
+RUN echo "Getting the files..."
+RUN git clone https://gitlab-student.centralesupelec.fr/tanguy.colleville/tweetoscope_2021_11.git
+WORKDIR tweetoscope_2021_11/collector
+RUN g++ -o tweet-collector tweet-collector.cpp -O3 -lcppkafka
+
+
+########################################################
+########       RUNNING THE COLLECTOR      ##############
+########################################################
+
+RUN chmod +x ./tweet-collector
+CMD ./tweet-collector params-deploy.config
